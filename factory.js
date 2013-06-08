@@ -60,7 +60,7 @@
    @param {Ember.Application} app
    @param {String} app
    @param {Object} props
-   @return {DS.Model}
+   @return {Promise}
    */
   Factory.build = function(app, name, props) {
     return generate(app, name, props);
@@ -78,7 +78,7 @@
     @param {Ember.Application} app
     @param {String} name
     @param {Object} props
-    @return {DS.Model}
+    @return {Promise}
    */
   Factory.create = function(app, name, props) {
     var record = generate(app, name, props, { commit: true });
