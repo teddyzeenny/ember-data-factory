@@ -39,7 +39,7 @@ function buildApp() {
   Em.run(App, App.advanceReadiness);
 }
 
-// Ember.testing = true;
+Ember.testing = true;
 buildApp();
 
 module("Factory", {

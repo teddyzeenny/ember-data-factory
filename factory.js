@@ -139,6 +139,9 @@
             Em.run(function() {
               relatedRecord.get('transaction').commit();
             });
+            if(!relatedRecord.get('isDirty')) {
+              relatedTransaction.add(relatedRecord);
+            }
           }
           belongsToRecords[key] = relatedRecord;
         }
@@ -180,13 +183,22 @@
         // }
         if(commit) {
           record.one('didCreate', function() {
-            relatedTransaction.commit();
-            defer.resolve(record);
+            Em.run(function() {
+              relatedTransaction.commit();
+            }); // fixture adapter dirties the parent
+            // avoid autorun
+            Em.run.next(function() {
+              defer.resolve(record);
+            });
           });
           transaction.add(record);
           transaction.commit();
         } else {
-          defer.resolve(record);
+          // avoid autorun
+          Em.run.next(function() {
+            defer.resolve(record);
+          });
+
         }
 
       });
