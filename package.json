@@ -1,0 +1,35 @@
+{
+  "name": "ember-data-factory",
+  "version": "0.0.1",
+
+  "main": "dist/commonjs/main.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "devDependencies": {
+    "jshint": "~0.9",
+    "grunt": "~0.4.1",
+    "grunt-microlib": "git://github.com/thomasboyt/grunt-microlib.git",
+    "grunt-browserify": "~1.0.2"
+  },
+  "scripts": {
+    "test": "grunt test",
+    "lint": "jshint lib",
+    "prepublish": "grunt build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/teddyzeenny/ember-data-factory"
+  },
+  "bugs": {
+    "url": "https://github.com/teddyzeenny/ember-data-factory"
+  },
+  "keywords": [
+    "emberjs",
+    "ember-data",
+    "factory",
+    "testing"
+  ],
+  "author": "Teddy Zeenny",
+  "license": "MIT"
+}

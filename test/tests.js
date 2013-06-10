@@ -57,6 +57,7 @@ module("Factory", {
   }
 });
 
+console.log('test');
 test("Single level Factory#attr", function() {
   var attributes = {};
 
