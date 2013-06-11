@@ -119,6 +119,9 @@
 
     for (key in attrObject) {
       var val = attrObject[key];
+
+      if(val == null) { continue; }
+
       var meta = model.metaForProperty(key);
       if(isBelongsTo(meta)) {
         if(!isRecord(val)) {
@@ -147,24 +150,45 @@
         }
 
       }
-      // else if(isHasMany(meta) && isArray(val)) {
-      //   var records = Em.A();
-      //   for (var i = 0; i < val.length; i++) {
-      //     if(!isRecord(val[i])) {
-      //       relatedRecord = generate(app, typeToName(meta.type), val[i], { commit: commit } );
-      //     } else {
-      //       relatedRecord = val[i];
-      //       if(commit) {
-      //         newTransaction(app).add(relatedRecord);
-      //         Em.run(function() {
-      //           relatedRecord.get('transaction').commit();
-      //         });
-      //       }
-      //     }
-      //     records.pushObject(relatedRecord);
-      //   }
-      //   hasManyRecords[key] = records;
-      // }
+      else if(isHasMany(meta) && isArray(val)) {
+        var records = Em.A();
+
+        // To generate each child's parent object, pass a null reference
+        // since the association will be properly set later
+        var associations = {};
+        associations[name] = null;
+
+        for (var i = 0; i < val.length; i++) {
+          if(!isRecord(val[i])) {
+            countWaiting++;
+            
+            // Overwrite the reference to the parent on the child (`meta.type`) to avoid infinite loops
+            (function(k) {
+              generate(app, typeToName(meta.type), $.extend(true, val[i], associations), { commit: commit } )
+              .then(function(currentRecord) {
+                countWaiting--;
+
+                hasManyRecords[k] = hasManyRecords[k] || [];
+                hasManyRecords[k].push(currentRecord);
+
+                relatedTransaction.add(currentRecord);
+
+                checkComplete();
+              });
+            })(key);
+          } else {
+            relatedRecord = val[i];
+            if(commit) {
+              newTransaction(app).add(relatedRecord);
+              Em.run(function() {
+                relatedRecord.get('transaction').commit();
+              });
+            }
+            hasManyRecords[key] = hasManyRecords[key] || [];
+            hasManyRecords[key].push(relatedRecord);
+          }
+        }
+      }
       else {
         attr[key] = val;
       }
@@ -175,12 +199,15 @@
       if(countWaiting !== 0) {
         return;
       }
+
       Em.run(function() {
         record = model.createRecord(attr);
         record.setProperties(belongsToRecords);
-        // for(var key in hasManyRecords) {
-        //   record.get(key).pushObjects(hasManyRecords[key]);
-        // }
+
+        for(var key in hasManyRecords) {
+          record.get(key).pushObjects(hasManyRecords[key]);
+        }
+
         if(commit) {
           record.one('didCreate', function() {
             Em.run(function() {
@@ -191,6 +218,7 @@
               defer.resolve(record);
             });
           });
+
           transaction.add(record);
           transaction.commit();
         } else {
