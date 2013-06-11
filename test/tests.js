@@ -49,7 +49,7 @@ module("Factory", {
   },
   teardown: function() {
     App.removeTestHelpers();
-    Factory.clear();
+    Factory.reset();
 
     App.Author.FIXTURES = [];
     App.Post.FIXTURES = [];
@@ -191,7 +191,6 @@ test("3 Level belongsTo relationship attributes", function() {
     ok(!comment.get('post.comment.isDirty'));
   });
 
-
 });
 
 test("We can pass model instances as attributes", function() {
@@ -216,6 +215,58 @@ test("We can pass model instances as attributes", function() {
     });
   }).then(function(post) {
     ok(post.get('author') === author);
+  });
+
+});
+
+test("Can use functions as attributes", function() {
+  expect(2);
+
+  Factory.define('post', {
+    title: function(app) {
+      ok(app === App);
+      return 'Teddy';
+    }
+  });
+
+  create('post').then(function(post) {
+    equal(post.get('title'), 'Teddy');
+  });
+});
+
+test("Can use functions as related model attributes", function() {
+  expect(1);
+
+  Factory.define('author', {
+    name: 'Teddy'
+  });
+
+  Factory.define('comment', {
+    title: 'Post title',
+    author: function() {
+      return {
+        name: 'Zini'
+      };
+    }
+  });
+
+
+
+  create('post').then(function(post) {
+    equal(post.get('author.name'), 'Zini');
+  });
+
+});
+
+test("Can customize which model to use", function() {
+  expect(1);
+
+  Factory.define('article', {
+    title: 'Article'
+  }, { modelName: 'Post' });
+
+  create('article').then(function(article) {
+    ok(article instanceof App.Post);
   });
 
 });

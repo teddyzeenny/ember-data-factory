@@ -18,13 +18,6 @@ module.exports = function(grunt) {
 
     pkg: grunt.file.readJSON('package.json'),
 
-    browserify: {
-      tests: {
-        src: ['test/tests.js'],
-        dest: 'tmp/tests-bundle.js'
-      }
-    },
-
     qunit: {
       all: {
         options: {
@@ -40,12 +33,24 @@ module.exports = function(grunt) {
         src: ['dist/<%= pkg.name %>-<%= pkg.version %>.js', 'test/tests.js'],
         dest: 'tmp/tests.js'
       }
+    },
+
+
+    browserify: {
+      tests: {
+        src: ['test/tests.js'],
+        dest: 'tmp/tests-bundle.js'
+      }
     }
+
   };
+
 
   // I have no idea what i'm doing
 
   this.registerTask('tests', "Builds the test package", ['concat:deps', 'browserify:tests', 'buildTestFiles:dist']);
+
+
 
   grunt.registerMultiTask('buildTestFiles', "Execute the tests", function() {
 

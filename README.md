@@ -63,6 +63,7 @@ You can pass custom properties to any of these helpers.  Passed properties will 
 attr('post', { title: 'My Post'} ); // { title: 'My Post', body: 'Post body' }
 ```
 
+
 Factories and Related Records
 ------------------------------------
 
@@ -98,6 +99,41 @@ create('comment', { post: { body: 'Custom Body' } }).then(function(comment) {
   comment.get('title'); // "My Comment"
   comment.get('post.title'); // "My Comment's Post'
   comment.get('post.body'); // "Custom Body"
+});
+```
+
+Attributes as Functions
+---------------------------------
+
+You can use functions to set attributes.  The attribute value will be the return value of the function.  The function will get the current application as a parameter.
+
+```javascript
+Factory.define('post', {
+  published:   function(app) { return new Date(); }
+});
+```
+
+You can also functions on related records:
+
+
+
+```javascript
+Factory.define('post', {
+  user: function(app) {
+    return app.get('currentUser');
+  }
+});
+```
+
+If a related record needs to use a special factory definition, you can use a combination of function and `attr` to achieve that:
+
+```javascript
+Factory.define('specialAuthor', { name: 'Teddy' }, { modelName: 'User' });
+
+Factory.define('post', {
+  author: function() {
+    return attr('specialAuthor');
+  }
 });
 ```
 

@@ -27,9 +27,19 @@ define("factory",
       @method define
       @param {String} name
       @param {Object} props
+      @param {Object} options (optional)
+        Possible options:
+          {String} modelName: The name of the model, ex: 'Post'
     */
-    Factory.define = function(name, props) {
-      definitions[name] = props;
+    Factory.define = function(name, props, options) {
+      definitions[name] = {
+        props: props
+      };
+      var defaultOptions = {
+        modelName: classify(name)
+      };
+      options = merge(defaultOptions, options);
+      definitions[name] = merge(definitions[name], options);
     };
 
     /**
@@ -48,7 +58,8 @@ define("factory",
     Factory.attr = function(app, name, props) {
       var obj;
       props = props || {};
-      obj = merge(definitions[name], props);
+      obj = merge(definitions[name].props, props);
+      obj = toAttr(app, obj);
       return obj;
     };
 
@@ -92,9 +103,9 @@ define("factory",
 
       Clears all factory definitions
 
-      @method clear
+      @method reset
      */
-    Factory.clear = function() {
+    Factory.reset = function() {
       definitions = {};
     };
 
@@ -116,8 +127,10 @@ define("factory",
       transaction = newTransaction(app);
       var relatedTransaction = newTransaction(app);
 
+      var definition = definitions[name];
+
       attrObject = Factory.attr(app, name, props);
-      model = app[classify(name)];
+      model = app[definition.modelName];
 
 
 
@@ -236,6 +249,18 @@ define("factory",
 
 
     // Utility methods used above
+
+    function toAttr(app, obj) {
+      var newObj = {};
+      for(var i in obj) {
+        if (typeof obj[i] === 'function') {
+          newObj[i] = obj[i](app);
+        } else {
+          newObj[i] = obj[i];
+        }
+      }
+      return newObj;
+    }
 
     function newTransaction(app) {
       return app.__container__.lookup('store:main').transaction();
