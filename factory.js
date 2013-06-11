@@ -163,17 +163,19 @@
             countWaiting++;
             
             // Overwrite the reference to the parent on the child (`meta.type`) to avoid infinite loops
-            generate(app, typeToName(meta.type), $.extend(true, val[i], associations), { commit: commit } )
-            .then(function(currentRecord) {
-              countWaiting--;
+            (function(k) {
+              generate(app, typeToName(meta.type), $.extend(true, val[i], associations), { commit: commit } )
+              .then(function(currentRecord) {
+                countWaiting--;
 
-              hasManyRecords[key] = hasManyRecords[key] || [];
-              hasManyRecords[key].push(currentRecord);
+                hasManyRecords[k] = hasManyRecords[k] || [];
+                hasManyRecords[k].push(currentRecord);
 
-              relatedTransaction.add(currentRecord);
+                relatedTransaction.add(currentRecord);
 
-              checkComplete();
-            });
+                checkComplete();
+              });
+            })(key);
           } else {
             relatedRecord = val[i];
             if(commit) {
