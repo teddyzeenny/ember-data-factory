@@ -1,4 +1,4 @@
-Ember Data Factory
+Ember Data Factory [![Build Status](https://secure.travis-ci.org/teddyzeenny/ember-data-factory.png?branch=master)](http://travis-ci.org/teddyzeenny/ember-data-factory)
 ===============
 
 Factory library for Ember Data.  Allows you to define and create factories instead of using fixtures.  It is best used with the ember-testing package.
