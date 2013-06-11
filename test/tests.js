@@ -2,7 +2,7 @@ var App;
 
 function buildApp() {
   Em.run(function() {
-    App = Em.Application.create();
+    App = window.App = Em.Application.create();
   });
 
   App.Store = DS.Store.extend({
@@ -57,7 +57,6 @@ module("Factory", {
   }
 });
 
-console.log('test');
 test("Single level Factory#attr", function() {
   var attributes = {};
 

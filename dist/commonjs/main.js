@@ -81,8 +81,7 @@ Factory.build = function(app, name, props) {
   @return {Promise}
  */
 Factory.create = function(app, name, props) {
-  var record = generate(app, name, props, { commit: true });
-  return record;
+  return generate(app, name, props, { commit: true });
 };
 
 /**

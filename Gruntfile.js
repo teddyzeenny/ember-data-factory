@@ -1,6 +1,6 @@
 module.exports = function(grunt) {
   // Load grunt-microlib config & tasks
-  var emberConfig = require('grunt-microlib').init.bind(this)(grunt);
+  var microlibConfig = require('grunt-microlib').init.bind(this)(grunt);
   grunt.loadNpmTasks('grunt-microlib');
 
 
@@ -33,11 +33,37 @@ module.exports = function(grunt) {
           ]
         }
       }
+    },
+
+    buildTestFiles: {
+      dist: {
+        src: ['dist/<%= pkg.name %>-<%= pkg.version %>.js', 'test/tests.js'],
+        dest: 'tmp/tests.js'
+      }
     }
   };
 
-  // Merge config into emberConfig, overwriting existing settings
-  grunt.initConfig(grunt.util._.merge(emberConfig, config));
+  // I have no idea what i'm doing
+
+  this.registerTask('tests', "Builds the test package", ['concat:deps', 'browserify:tests', 'buildTestFiles:dist']);
+
+  grunt.registerMultiTask('buildTestFiles', "Execute the tests", function() {
+
+    this.files.forEach(function(f) {
+      var output = ["(function(globals) {"];
+
+      output.push.apply(output, f.src.map(grunt.file.read));
+
+      output.push('})(window);');
+
+      grunt.file.write(f.dest, output.join("\n"));
+    });
+  });
+
+
+  // Merge config into microlibConfig, overwriting existing settings
+  grunt.initConfig(grunt.util._.merge(microlibConfig, config));
+
 
   // Load custom tasks from NPM
   grunt.loadNpmTasks('grunt-browserify');
