@@ -55,6 +55,7 @@ Factory.define = function(name, props, options) {
 Factory.attr = function(app, name, props) {
   var obj;
   props = props || {};
+  props = toAttr(app, props);
   obj = merge(definitions[name].props, props);
   obj = toAttr(app, obj);
   return obj;

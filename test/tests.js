@@ -241,7 +241,7 @@ test("Can use functions as related model attributes", function() {
     name: 'Teddy'
   });
 
-  Factory.define('comment', {
+  Factory.define('post', {
     title: 'Post title',
     author: function() {
       return {
@@ -249,8 +249,6 @@ test("Can use functions as related model attributes", function() {
       };
     }
   });
-
-
 
   create('post').then(function(post) {
     equal(post.get('author.name'), 'Zini');
