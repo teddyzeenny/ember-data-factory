@@ -163,13 +163,11 @@ define("factory",
       options = options || {};
       var commit = options.commit || false;
       transaction = newTransaction(app);
-      var relatedTransaction = newTransaction(app);
 
       var definition = definitions[name];
 
       attrObject = Factory.attr(app, name, props);
       model = app[definition.modelName];
-
 
 
       for (key in attrObject) {
@@ -184,32 +182,11 @@ define("factory",
             if(commit) {
               newTransaction(app).add(relatedRecord);
               Em.run(relatedRecord.get('transaction'), 'commit');
-              if(!relatedRecord.get('isDirty')) {
-                relatedTransaction.add(relatedRecord);
-              }
             }
             belongsToRecords[key] = relatedRecord;
           }
 
         }
-        // else if(isHasMany(meta) && isArray(val)) {
-        //   var records = Em.A();
-        //   for (var i = 0; i < val.length; i++) {
-        //     if(!isRecord(val[i])) {
-        //       relatedRecord = generate(app, typeToName(meta.type), val[i], { commit: commit } );
-        //     } else {
-        //       relatedRecord = val[i];
-        //       if(commit) {
-        //         newTransaction(app).add(relatedRecord);
-        //         Em.run(function() {
-        //           relatedRecord.get('transaction').commit();
-        //         });
-        //       }
-        //     }
-        //     records.pushObject(relatedRecord);
-        //   }
-        //   hasManyRecords[key] = records;
-        // }
         else {
           attr[key] = val;
         }
@@ -221,7 +198,6 @@ define("factory",
         .then(function(currentRecord) {
           countWaiting--;
           belongsToRecords[k] = currentRecord;
-          relatedTransaction.add(currentRecord);
           checkComplete();
         });
       }
@@ -233,19 +209,17 @@ define("factory",
         Em.run(function() {
           record = model.createRecord(attr);
           record.setProperties(belongsToRecords);
-          // for(var key in hasManyRecords) {
-          //   record.get(key).pushObjects(hasManyRecords[key]);
-          // }
+
           if(commit) {
             record.one('didCreate', function() {
-              Em.run(function() {
-                relatedTransaction.commit();
-              }); // fixture adapter dirties the parent
               // avoid autorun
               Em.run.next(function() {
                 defer.resolve(record);
               });
             });
+            for(var i in belongsToRecords) {
+              transaction.add(belongsToRecords[i]);
+            }
             transaction.add(record);
             transaction.commit();
           } else {
