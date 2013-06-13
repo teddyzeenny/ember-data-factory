@@ -164,3 +164,16 @@ test("Editing a post", function() {
   });
 });
 ```
+
+Installation, Building, and Testing
+---------------------------
+
+To directly use the library, head up to the `dist` directory and download the file you need.
+
+### Building and Testing:
+
+Run `npm install` to install necessary modules.  Then:
+
+- `grunt` To build the files in the `dist` directory
+- `grunt test` To run the tests in the terminal
+- `grunt server` to start the test server and then visit `localhost:8000` in the browser
