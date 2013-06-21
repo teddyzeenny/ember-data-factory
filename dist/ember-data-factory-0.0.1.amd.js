@@ -1,7 +1,113 @@
-define("factory",
-  [],
-  function() {
+define("factory/adapters",
+  ["exports"],
+  function(__exports__) {
     "use strict";
+    var Adapter = Ember.Object.extend({
+      /**
+       Checks whether a given value
+       is a record instance.
+
+       @method isRecord
+       @param {mixed} val
+       @return {Boolean}
+      */
+      isRecord: function(val) { return false; },
+
+      /**
+       Checks whether a given
+       property represents
+       a `belongsTo` relationship
+
+       @method isBelongsTo
+       @param {Object} modelClass
+       @param {String} key
+       @return {Boolean}
+      */
+      isBelongsTo: function(modelClass, key) { return false; },
+
+      /**
+       Retuns the model class
+       of a `belongsTo` relationship
+
+       @method belongsToModelClass
+       @param {Object} modelClass
+       @param {String} key
+       @return {Object}
+      */
+      belongsToModelClass: function(modelClass, key) {},
+
+      /**
+       Returns the name of a model class
+
+       @method modelClassName
+       @param {Object} modelClass
+       @return {String}
+      */
+      modelClassName: function(modelClass) {
+        var parts = modelClass.toString().split(".");
+        return Em.String.camelize(parts[parts.length - 1]);
+      },
+
+      /**
+       Commits a given record
+       to persistence.  Returns
+       a promise that resolves
+       when the record persists.
+
+       @method save
+       @param {Ember.Application} app
+       @param {Object} record
+       @param {Array} parentRecords
+       @return {Promise}
+      */
+      save: function(app, record, parentRecords){}
+    });
+
+
+    var EmberDataAdapter = Adapter.extend({
+      isRecord: function(val) {
+        return val instanceof DS.Model;
+      },
+
+      isBelongsTo: function(modelClass, key) {
+        var meta = modelClass.metaForProperty(key);
+        return meta.isRelationship && meta.kind === 'belongsTo';
+      },
+
+      belongsToModelClass: function(modelClass, key) {
+        var meta = modelClass.metaForProperty(key);
+        return meta.type;
+      },
+
+      save: function(app, record, parentRecords) {
+        var i, transaction = app.__container__.lookup('store:main').transaction();
+        parentRecords = parentRecords || [];
+        return Ember.RSVP.Promise(function(resolve) {
+          record.one('didCreate', function() {
+            Em.run(function() {
+              resolve(record);
+            });
+          });
+
+          for(i = 0; i < parentRecords.length; i++) {
+            transaction.add(parentRecords[i]);
+          }
+          transaction.add(record);
+          transaction.commit();
+        });
+      }
+    });
+
+
+    __exports__.Adapter = Adapter;
+    __exports__.EmberDataAdapter = EmberDataAdapter;
+  });
+define("factory",
+  ["factory/adapters"],
+  function(__dependency1__) {
+    "use strict";
+    var Adapter = __dependency1__.Adapter;
+    var EmberDataAdapter = __dependency1__.EmberDataAdapter;
 
     var Factory = {};
     var definitions = {};
@@ -78,7 +184,11 @@ define("factory",
      @return {Promise}
      */
     Factory.build = function(app, name, props) {
-      return generate(app, name, props);
+      var promise;
+      Ember.run(function() {
+        promise = generate(app, name, props);
+      });
+      return promise;
     };
 
 
@@ -96,7 +206,11 @@ define("factory",
       @return {Promise}
      */
     Factory.create = function(app, name, props) {
-      return generate(app, name, props, { commit: true });
+      var promise;
+      Ember.run(function() {
+        promise = generate(app, name, props, { commit: true });
+      });
+      return promise;
     };
 
     /**
@@ -111,22 +225,23 @@ define("factory",
     };
 
 
+    Factory.Adapter = Adapter;
+    Factory.EmberDataAdapter = EmberDataAdapter;
+
+
     // This can probably be written
     // in a cleaner way
     // Mainly ED bugs made it ugly
     // Will definitely become cleaner with time
     function generate(app, name, props, options) {
-      var defer = Em.RSVP.defer();
-      var countWaiting = 0;
 
       var key, model, attrObject, record,
-          attr = {}, belongsToRecords = {}, hasManyRecords = {},
-          transaction, relatedRecord;
+          attr = {}, belongsToRecords = {},
+          savePromise, belongsToPromises = [],
+          belongsToKeys = [];
 
       options = options || {};
       var commit = options.commit || false;
-      transaction = newTransaction(app);
-
       var definition = definitions[name];
 
       attrObject = Factory.attr(app, name, props);
@@ -135,68 +250,59 @@ define("factory",
 
       for (key in attrObject) {
         var val = attrObject[key];
-        var meta = model.metaForProperty(key);
-        if(isBelongsTo(meta)) {
+        if(isBelongsTo(model, key)) {
+          var belongsToModelClass = Factory.adapter.belongsToModelClass(model, key);
           if(!isRecord(val)) {
-            countWaiting++;
-            generateParent(key, app, typeToName(meta.type), val, { commit: commit } );
+            belongsToKeys.push(key);
+            belongsToPromises.push(generateParent(key, app, modelClassName(belongsToModelClass), val, { commit: commit } ));
           } else {
-            relatedRecord = val;
             if(commit) {
-              newTransaction(app).add(relatedRecord);
-              Em.run(relatedRecord.get('transaction'), 'commit');
+              Factory.adapter.save(app, val);
             }
-            belongsToRecords[key] = relatedRecord;
+            belongsToRecords[key] = val;
           }
-
         }
         else {
           attr[key] = val;
         }
       }
-      checkComplete();
+
 
       function generateParent(k, app, name, val, options) {
-        generate(app, typeToName(meta.type), val, { commit: commit } )
-        .then(function(currentRecord) {
-          countWaiting--;
-          belongsToRecords[k] = currentRecord;
-          checkComplete();
-        });
+        return generate(app, name, val, { commit: commit } );
       }
 
-      function checkComplete() {
-        if(countWaiting !== 0) {
-          return;
+      function commitRecord(parentRecords) {
+        var defer = Em.RSVP.defer(), i, allBelongsToRecords = [];
+
+        record = model.createRecord(attr);
+        // set newly created parents
+        for (i = 0; i < parentRecords.length; i++) {
+          record.set(belongsToKeys[i], parentRecords[i]);
+          allBelongsToRecords.push(parentRecords[i]);
         }
-        Em.run(function() {
-          record = model.createRecord(attr);
-          record.setProperties(belongsToRecords);
+        // set already created parents
+        for (var k in belongsToRecords) {
+          record.set(k, belongsToRecords[k]);
+          allBelongsToRecords.push(belongsToRecords[k]);
+        }
 
-          if(commit) {
-            record.one('didCreate', function() {
-              // avoid autorun
-              Em.run.next(function() {
-                defer.resolve(record);
-              });
-            });
-            for(var i in belongsToRecords) {
-              transaction.add(belongsToRecords[i]);
-            }
-            transaction.add(record);
-            transaction.commit();
-          } else {
-            // avoid autorun
-            Em.run.next(function() {
-              defer.resolve(record);
-            });
+        if(commit) {
+          defer.resolve(Factory.adapter.save(app, record, allBelongsToRecords));
 
-          }
+        } else {
+          // avoid autorun
+          Em.run.next(function() {
+            defer.resolve(record);
+          });
 
-        });
+        }
+
+        return defer.promise;
       }
 
-      return defer.promise;
+
+      return Ember.RSVP.all(belongsToPromises).then(commitRecord);
     }
 
 
@@ -237,29 +343,21 @@ define("factory",
       return newObj;
     }
 
-    function newTransaction(app) {
-      return app.__container__.lookup('store:main').transaction();
+
+    function isRecord(val) {
+      return Factory.adapter.isRecord(val);
     }
 
-    function isBelongsTo(meta) {
-      return meta.isRelationship && meta.kind === 'belongsTo';
-    }
-
-    function isHasMany(meta) {
-     return meta.isRelationship && meta.kind === 'hasMany';
+    function isBelongsTo(modelClass, key) {
+      return Factory.adapter.isBelongsTo(modelClass, key);
     }
 
     function isArray(val) {
       return toString.call(val) === "[object Array]";
     }
 
-    function isRecord(val) {
-      return val instanceof DS.Model;
-    }
-
-    function typeToName(type) {
-      var parts = type.toString().split(".");
-      return Em.String.camelize(parts[parts.length - 1]);
+    function modelClassName(modelClass) {
+      return Factory.adapter.modelClassName(modelClass);
     }
 
     function classify(text) {
@@ -269,6 +367,8 @@ define("factory",
     function merge(firstObject, secondObject) {
       return Em.$.extend(true, {}, firstObject, secondObject);
     }
+
+    Factory.adapter = Factory.EmberDataAdapter.create();
 
 
     return Factory;
