@@ -81,7 +81,7 @@ var EmberDataAdapter = Adapter.extend({
     parentRecords = parentRecords || [];
     return Ember.RSVP.Promise(function(resolve) {
       record.one('didCreate', function() {
-        Em.run(function() {
+        Em.run.next(function() {
           resolve(record);
         });
       });

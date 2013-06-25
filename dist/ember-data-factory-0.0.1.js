@@ -121,7 +121,7 @@ define("factory/adapters",
         parentRecords = parentRecords || [];
         return Ember.RSVP.Promise(function(resolve) {
           record.one('didCreate', function() {
-            Em.run(function() {
+            Em.run.next(function() {
               resolve(record);
             });
           });
@@ -325,9 +325,7 @@ define("factory",
         }
 
         if(commit) {
-          Em.run.next(function() {
-            defer.resolve(Factory.adapter.save(app, record, allBelongsToRecords));
-          });
+          defer.resolve(Factory.adapter.save(app, record, allBelongsToRecords));
 
         } else {
           // avoid autorun
