@@ -288,7 +288,9 @@ define("factory",
         }
 
         if(commit) {
-          defer.resolve(Factory.adapter.save(app, record, allBelongsToRecords));
+          Em.run.next(function() {
+            defer.resolve(Factory.adapter.save(app, record, allBelongsToRecords));
+          });
 
         } else {
           // avoid autorun
