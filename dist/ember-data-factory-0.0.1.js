@@ -287,7 +287,7 @@ define("factory",
 
       for (key in attrObject) {
         var val = attrObject[key];
-        if(isBelongsTo(model, key)) {
+        if(val && isBelongsTo(model, key)) {
           var belongsToModelClass = Factory.adapter.belongsToModelClass(model, key);
           if(!isRecord(val)) {
             belongsToKeys.push(key);

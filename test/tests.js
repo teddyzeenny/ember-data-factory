@@ -269,6 +269,27 @@ test("Can customize which model to use", function() {
 
 });
 
+test("Can overwrite belongsTo with null", function() {
+  expect(2);
+  Factory.define('author', {
+    name: 'Teddy'
+  });
+
+  Factory.define('post', {
+    title: 'Post',
+    author: {}
+  });
+
+  create('post').then(function(post) {
+    equal(post.get('author.name'), 'Teddy');
+  });
+
+  create('post', { author: null }).then(function(post){
+    equal(post.get('author'), null);
+  });
+
+});
+
 // test("Can build hasMany relationships through attributes and model instances", function() {
 //   expect(5);
 //   var post;
