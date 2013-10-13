@@ -128,7 +128,7 @@ Factory.define('post', {
 If a related record needs to use a special factory definition, you can use a combination of function and `attr` to achieve that:
 
 ```javascript
-Factory.define('specialAuthor', { name: 'Teddy' }, { modelName: 'User' });
+Factory.define('specialAuthor', { name: 'Teddy' }, { modelName: 'user' });
 
 Factory.define('post', {
   author: function() {
@@ -164,6 +164,55 @@ test("Editing a post", function() {
   });
 });
 ```
+
+Events
+-------
+
+Events are fired before and after building/creating factories.
+
+The events are: `beforeBuild`, `afterBuild`, `beforeCreate`, `afterCreate`
+
+Example:
+
+```javascript
+var countPosts = 0;
+Factory.on('beforeCreate', function(e) {
+  if (e.name === 'post') {
+    console.log('Will create post number ' + (++countPosts));
+  }
+});
+```
+
+This can be useful when you want to perform special operations before/after factory requests.
+
+Here's an example of an app that informs the server not to perform any authorization for factory requests.
+
+```javascript
+var isFactoryRequest = false;
+
+App.ApplicationAdapter.reopen({
+
+    ajax: function(url, type, hash) {
+      if(isFactoryRequest) {
+        hash = hash || {};
+        hash.data = hash.data || {};
+        hash.data.is_factory_request = 1;
+      }
+      return this._super(url, type, hash);
+    }
+});
+
+Factory.on('beforeCreate', function(e) {
+  isFactoryRequest = true;
+});
+
+Factory.on('afterCreate', function(e) {
+  isFactoryRequest = false;
+});
+
+```
+
+
 
 Installation, Building, and Testing
 ---------------------------

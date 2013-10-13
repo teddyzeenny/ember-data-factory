@@ -3,7 +3,7 @@ var __dependency1__ = require("./factory/adapters");
 var Adapter = __dependency1__.Adapter;
 var EmberDataAdapter = __dependency1__.EmberDataAdapter;
 
-var Factory = {};
+var Factory = Ember.Namespace.extend(Ember.Evented).create();
 var definitions = {};
 
 /**
@@ -78,9 +78,16 @@ Factory.attr = function(app, name, props) {
  @return {Promise}
  */
 Factory.build = function(app, name, props) {
-  var promise;
+  var event = { app: app, name: name, attr: props },
+      promise, self = this;
+
   Ember.run(function() {
-    promise = generate(app, name, props);
+    self.trigger('beforeBuild', event);
+    promise = generate(app, name, props).then(function(record) {
+      event.record = record;
+      self.trigger('afterBuild', event);
+      return record;
+    });
   });
   return promise;
 };
@@ -100,9 +107,16 @@ Factory.build = function(app, name, props) {
   @return {Promise}
  */
 Factory.create = function(app, name, props) {
-  var promise;
+  var event = { app: app, name: name, attr: props },
+      promise, self = this;
+
   Ember.run(function() {
-    promise = generate(app, name, props, { commit: true });
+    self.trigger('beforeCreate', event);
+    promise = generate(app, name, props, { commit: true }).then(function(record) {
+      event.record = record;
+      self.trigger('afterCreate', event);
+      return record;
+    });
   });
   return promise;
 };

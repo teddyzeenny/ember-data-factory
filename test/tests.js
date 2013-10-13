@@ -6,9 +6,7 @@ function buildApp() {
   });
 
   App.Store = DS.Store.extend({
-    adapter: DS.FixtureAdapter.extend({
-      simulateRemoteResponse: false
-    })
+    adapter: DS.FixtureAdapter.extend()
   });
 
   App.Post = DS.Model.extend({
@@ -287,5 +285,48 @@ test("Can overwrite belongsTo with null", function() {
   create('post', { author: null }).then(function(post){
     equal(post.get('author'), null);
   });
+
+});
+
+
+test("Events are correctly triggered", function() {
+  expect(10);
+
+  var record = null, attributes = { name: 'Teddy' };
+
+  Factory.define('author', {});
+
+  Factory.one('beforeBuild', function(e) {
+    ok(true, 'before build fired');
+    equal(e.name, 'author');
+    deepEqual(attributes , e.attr);
+  });
+
+  Factory.one('afterBuild', function(e) {
+    ok(true, 'after build fired');
+    record = e.record;
+  });
+
+
+  Factory.one('beforeCreate', function(e) {
+    ok(true, 'before create fired');
+    equal(e.name, 'author');
+    deepEqual(attributes , e.attr);
+  });
+
+  Factory.one('afterCreate', function(e) {
+    ok(true, 'after create fired');
+    record = e.record;
+  });
+
+
+  build('author', attributes).then(function(author) {
+    ok(author === record, "correct record is passed with afterBuild event");
+    record = null;
+  })
+  .create('author', attributes).then(function(author) {
+    ok(author === record, "correct record is passed with afterCreate event");
+  });
+
 
 });
