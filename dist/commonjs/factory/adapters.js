@@ -36,13 +36,38 @@ var Adapter = Ember.Object.extend({
   /**
    Returns the name of a model class
 
-   @method modelClassName
+   @method typeName
    @param {Object} modelClass
    @return {String}
   */
-  modelClassName: function(modelClass) {
+  typeName: function(modelClass) {
     var parts = modelClass.toString().split(".");
     return Em.String.camelize(parts[parts.length - 1]);
+  },
+
+  /**
+   Returns the model type class given a name
+
+   @method modelFor
+   @param {Ember.Application} app
+   @param {string} modelName
+   @return {Object}
+  */
+  modelFor: function(app, modelName) {
+    return app[Ember.String.classify(modelName)];
+  },
+
+  /**
+   Creates a record without saving
+
+   @method createRecord
+   @param {Ember.Application} app
+   @param {string} modelName
+   @param {Object} the record's attributes
+   @return {Object}
+  */
+  createRecord: function(app, modelName, attr) {
+    return this.modelFor(app, modelName).createRecord(attr);
   },
 
   /**
@@ -58,10 +83,20 @@ var Adapter = Ember.Object.extend({
    @return {Promise}
   */
   save: function(app, record, parentRecords){}
+
 });
 
 
 var EmberDataAdapter = Adapter.extend({
+
+  modelFor: function(app, modelName) {
+    return app.__container__.lookup('store:main').modelFor(modelName);
+  },
+
+  typeName: function(modelClass) {
+    return Ember.String.camelize(modelClass.typeKey);
+  },
+
   isRecord: function(val) {
     return val instanceof DS.Model;
   },
@@ -71,27 +106,23 @@ var EmberDataAdapter = Adapter.extend({
     return meta.isRelationship && meta.kind === 'belongsTo';
   },
 
-  belongsToModelClass: function(modelClass, key) {
+  belongsToModelClass: function(app, modelClass, key) {
     var meta = modelClass.metaForProperty(key);
-    return meta.type;
+    var type = meta.type;
+    if (Ember.typeOf(type) === 'string') {
+      type = this.modelFor(app, type);
+    }
+    return type;
+  },
+
+  createRecord: function(app, modelName, attr) {
+    return app.__container__.lookup('store:main').createRecord(modelName, attr);
   },
 
   save: function(app, record, parentRecords) {
-    var i, transaction = app.__container__.lookup('store:main').transaction();
+    var i, transaction = [];
     parentRecords = parentRecords || [];
-    return Ember.RSVP.Promise(function(resolve) {
-      record.one('didCreate', function() {
-        Em.run.next(function() {
-          resolve(record);
-        });
-      });
-
-      for(i = 0; i < parentRecords.length; i++) {
-        transaction.add(parentRecords[i]);
-      }
-      transaction.add(record);
-      transaction.commit();
-    });
+    return Ember.RSVP.resolve(record.save());
   }
 });
 

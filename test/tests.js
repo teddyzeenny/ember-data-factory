@@ -6,7 +6,7 @@ function buildApp() {
   });
 
   App.Store = DS.Store.extend({
-    adapter: DS.FixtureAdapter.create({
+    adapter: DS.FixtureAdapter.extend({
       simulateRemoteResponse: false
     })
   });
@@ -14,8 +14,8 @@ function buildApp() {
   App.Post = DS.Model.extend({
     title: DS.attr('string'),
     body: DS.attr('string'),
-    comments: DS.hasMany('App.Comments'),
-    author: DS.belongsTo('App.Author')
+    comments: DS.hasMany('comment'),
+    author: DS.belongsTo('author')
   });
 
   App.Post.FIXTURES = [];
@@ -23,14 +23,14 @@ function buildApp() {
   App.Comment = DS.Model.extend({
     title: DS.attr('string'),
     text: DS.attr('string'),
-    post: DS.belongsTo('App.Post')
+    post: DS.belongsTo('post')
   });
 
   App.Comment.FIXTURES = [];
 
   App.Author = DS.Model.extend({
     name: DS.attr('string'),
-    posts: DS.hasMany('App.Post')
+    posts: DS.hasMany('post')
   });
 
   App.Author.FIXTURES = [];
@@ -289,39 +289,3 @@ test("Can overwrite belongsTo with null", function() {
   });
 
 });
-
-// test("Can build hasMany relationships through attributes and model instances", function() {
-//   expect(5);
-//   var post;
-
-//   Em.run(function() {
-//     post = App.Post.createRecord({
-//       title: 'Post 3'
-//     });
-//   });
-
-//   Factory.define('author', {
-//     name: 'Teddy',
-//     posts: [{
-//         title: 'Post 1'
-//       }, {
-//         title: 'Post 2'
-//       },
-//       post
-//     ]
-//   });
-
-//   Factory.define('post', {
-//     title: 'Post Title'
-//   });
-
-
-//   create('author').then(function(author) {
-//     ok(author instanceof App.Author);
-//     equal(author.get('posts.length'), 3);
-//     equal(author.get('posts').objectAt(0).get('title'), 'Post 1');
-//     equal(author.get('posts').objectAt(1).get('title'), 'Post 2');
-//     equal(author.get('posts').objectAt(2).get('title'), 'Post 3');
-//   });
-
-// });
