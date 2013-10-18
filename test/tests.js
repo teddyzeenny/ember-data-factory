@@ -13,7 +13,8 @@ function buildApp() {
     title: DS.attr('string'),
     body: DS.attr('string'),
     comments: DS.hasMany('comment'),
-    author: DS.belongsTo('author')
+    author: DS.belongsTo('author'),
+    createdAt: DS.attr('string')
   });
 
   App.Post.FIXTURES = [];
@@ -94,6 +95,18 @@ test("Single level Factory#build", function() {
   })
 
 
+});
+
+test("Single level Factory#build with camelCase attributes", function() {
+  expect(7);
+
+  Factory.define('post', {
+    createdAt: 'yesterday'
+  });
+
+  build('post').then(function(record) {
+    equal(record.get('createdAt'), 'yesterday');
+  });
 });
 
 test("Single level Factory#create", function() {
