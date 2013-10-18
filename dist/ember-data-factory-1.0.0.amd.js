@@ -365,8 +365,14 @@ define("factory",
     var helper = Ember.Test.registerHelper;
 
     helper('attr', attr);
+
+    if (Ember.Test.registerAsyncHelper) {
+      helper = Ember.Test.registerAsyncHelper;
+    }
+
     helper('build', build);
     helper('create', create);
+
 
 
 
