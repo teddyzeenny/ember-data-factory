@@ -28,10 +28,18 @@ function buildApp() {
 
   App.Author = DS.Model.extend({
     name: DS.attr('string'),
-    posts: DS.hasMany('post')
+    posts: DS.hasMany('post'),
+    jobs: DS.hasMany('job', {async: true})
   });
 
   App.Author.FIXTURES = [];
+
+  App.Job = DS.Model.extend({
+    name: DS.attr('string'),
+    author: DS.belongsTo('author')
+  });
+
+  App.Job.FIXTURES = [];
 
   App.setupForTesting();
   Em.run(App, App.advanceReadiness);
@@ -152,6 +160,28 @@ test("Can set belongsTo relationship attributes", function() {
     ok(!post.get('author.isNew'));
   });
 
+});
+
+test("Can set belongsTo relationship with async hasMany", function() {
+  expect(2);
+
+  Factory.define('author', {
+    name: 'Zini'
+  });
+
+  Factory.define('job', {
+    name: 'EmberDataFactory',
+    author: {}
+  });
+
+  create('author').then(function(author) {
+    create('job', {author: author}).then(function(job) {
+      equal(job.get('author.name'), 'Zini');
+      author.get('jobs').then(function(jobs) {
+        equal(jobs.get('length'), 1);
+      });
+    });
+  });
 });
 
 test("3 Level belongsTo relationship attributes", function() {
