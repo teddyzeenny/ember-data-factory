@@ -45,7 +45,7 @@ define("factory/adapters",
       */
       typeName: function(modelClass) {
         var parts = modelClass.toString().split(".");
-        return Em.String.camelize(parts[parts.length - 1]);
+        return Em.String.dasherize(parts[parts.length - 1]);
       },
 
       /**
@@ -97,7 +97,7 @@ define("factory/adapters",
       },
 
       typeName: function(modelClass) {
-        return Ember.String.camelize(modelClass.typeKey);
+        return Ember.String.dasherize(modelClass.typeKey);
       },
 
       isRecord: function(val) {
@@ -169,11 +169,12 @@ define("factory",
           {String} modelName: The name of the model, ex: 'Post'
     */
     Factory.define = function(name, props, options) {
+      name = normalizeName(name);
       definitions[name] = {
         props: props
       };
       var defaultOptions = {
-        modelName: Ember.String.camelize(name)
+        modelName: name
       };
       options = merge(defaultOptions, options);
       definitions[name] = merge(definitions[name], options);
@@ -194,6 +195,7 @@ define("factory",
     */
     Factory.attr = function(app, name, props) {
       var obj;
+      name = normalizeName(name);
       props = props || {};
       props = toAttr(app, props);
       obj = merge(definitions[name].props, props);
@@ -215,6 +217,7 @@ define("factory",
      @return {Promise}
      */
     Factory.build = function(app, name, props) {
+      name = normalizeName(name);
       var event = { app: app, name: name, attr: props },
           promise, self = this;
 
@@ -244,6 +247,7 @@ define("factory",
       @return {Promise}
      */
     Factory.create = function(app, name, props) {
+      name = normalizeName(name);
       var event = { app: app, name: name, attr: props },
           promise, self = this;
 
@@ -418,6 +422,10 @@ define("factory",
 
     function merge(firstObject, secondObject) {
       return Em.$.extend(true, {}, firstObject, secondObject);
+    }
+
+    function normalizeName(name) {
+      return Ember.String.dasherize(name);
     }
 
     Factory.adapter = Factory.EmberDataAdapter.create();

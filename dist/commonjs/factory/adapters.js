@@ -42,7 +42,7 @@ var Adapter = Ember.Object.extend({
   */
   typeName: function(modelClass) {
     var parts = modelClass.toString().split(".");
-    return Em.String.camelize(parts[parts.length - 1]);
+    return Em.String.dasherize(parts[parts.length - 1]);
   },
 
   /**
@@ -94,7 +94,7 @@ var EmberDataAdapter = Adapter.extend({
   },
 
   typeName: function(modelClass) {
-    return Ember.String.camelize(modelClass.typeKey);
+    return Ember.String.dasherize(modelClass.typeKey);
   },
 
   isRecord: function(val) {

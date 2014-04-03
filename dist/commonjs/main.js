@@ -32,11 +32,12 @@ var definitions = {};
       {String} modelName: The name of the model, ex: 'Post'
 */
 Factory.define = function(name, props, options) {
+  name = normalizeName(name);
   definitions[name] = {
     props: props
   };
   var defaultOptions = {
-    modelName: Ember.String.camelize(name)
+    modelName: name
   };
   options = merge(defaultOptions, options);
   definitions[name] = merge(definitions[name], options);
@@ -57,6 +58,7 @@ Factory.define = function(name, props, options) {
 */
 Factory.attr = function(app, name, props) {
   var obj;
+  name = normalizeName(name);
   props = props || {};
   props = toAttr(app, props);
   obj = merge(definitions[name].props, props);
@@ -78,6 +80,7 @@ Factory.attr = function(app, name, props) {
  @return {Promise}
  */
 Factory.build = function(app, name, props) {
+  name = normalizeName(name);
   var event = { app: app, name: name, attr: props },
       promise, self = this;
 
@@ -107,6 +110,7 @@ Factory.build = function(app, name, props) {
   @return {Promise}
  */
 Factory.create = function(app, name, props) {
+  name = normalizeName(name);
   var event = { app: app, name: name, attr: props },
       promise, self = this;
 
@@ -281,6 +285,10 @@ function createRecord(app, modelName, attr) {
 
 function merge(firstObject, secondObject) {
   return Em.$.extend(true, {}, firstObject, secondObject);
+}
+
+function normalizeName(name) {
+  return Ember.String.dasherize(name);
 }
 
 Factory.adapter = Factory.EmberDataAdapter.create();
