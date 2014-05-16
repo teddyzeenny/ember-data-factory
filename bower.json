@@ -1,0 +1,31 @@
+{
+  "name": "ember-data-factory",
+  "version": "1.0.0",
+  "homepage": "https://github.com/teddyzeenny/ember-data-factory",
+  "authors": [
+    "Teddy Zeenny"
+  ],
+  "main": [
+    "dist/commonjs/main.js",
+    "dist/ember-data-factory-1.0.0.amd.js",
+    "dist/ember-data-factory-1.0.0.js"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/teddyzeenny/ember-data-factory"
+  },
+  "keywords": [
+    "emberjs",
+    "ember-data",
+    "factory",
+    "testing"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
