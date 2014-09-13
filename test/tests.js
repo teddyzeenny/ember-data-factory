@@ -5,7 +5,7 @@ function buildApp() {
     App = window.App = Em.Application.create();
   });
 
-  App.Store = DS.Store.extend({
+  App.ApplicationStore = DS.Store.extend({
     adapter: DS.FixtureAdapter.extend()
   });
 
@@ -42,7 +42,6 @@ function buildApp() {
   App.Job.FIXTURES = [];
 
   App.setupForTesting();
-  Em.run(App, App.advanceReadiness);
 }
 
 Ember.testing = true;
